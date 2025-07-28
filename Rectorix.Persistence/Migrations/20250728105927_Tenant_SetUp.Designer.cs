@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Rectorix.Persistence.DbContext;
 
@@ -11,9 +12,11 @@ using Rectorix.Persistence.DbContext;
 namespace Rectorix.Persistence.Migrations
 {
     [DbContext(typeof(RectorixDBContext))]
-    partial class RectorixDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250728105927_Tenant_SetUp")]
+    partial class Tenant_SetUp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

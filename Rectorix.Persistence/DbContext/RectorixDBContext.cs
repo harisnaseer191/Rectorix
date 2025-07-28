@@ -1,12 +1,20 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Rectorix.Domain;
+using Rectorix.Domain.DomainShared;
 using Rectorix.Domain.Entities;
+using System;
 
 namespace Rectorix.Persistence.DbContext
 {
     public class RectorixDBContext: IdentityDbContext<ApplicationUser, UserRoles, long>
     {
-        public RectorixDBContext(DbContextOptions<RectorixDBContext> options) : base(options) { }
+        private readonly ITenantAccessor _tenant;
+
+        public RectorixDBContext(DbContextOptions<RectorixDBContext> options,ITenantAccessor tenant) : base(options)
+        {
+            _tenant = tenant;
+        }
 
         public DbSet<Permissions> Permissions => Set<Permissions>();
         public DbSet<RolePermissions> RolePermissions => Set<RolePermissions>();
@@ -16,6 +24,16 @@ namespace Rectorix.Persistence.DbContext
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            // Apply global filter to every entity that implements IMustHaveTenant
+            foreach (var e in builder.Model.GetEntityTypes()
+                                     .Where(t => typeof(IMustHaveTenant).IsAssignableFrom(t.ClrType)))
+            {
+                var method = typeof(RectorixDBContext).GetMethod(nameof(SetTenantFilter),
+                             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                             .MakeGenericMethod(e.ClrType);
+
+                method.Invoke(null, new object?[] { builder, this });
+            }
 
             builder.Entity<RolePermissions>().HasKey(rp => new { rp.RoleId, rp.PermissionId });
 
@@ -43,5 +61,10 @@ namespace Rectorix.Persistence.DbContext
 
             });
         }
+
+        private static void SetTenantFilter<TEntity>(ModelBuilder builder, RectorixDBContext ctx)
+        where TEntity : class, IMustHaveTenant
+        => builder.Entity<TEntity>()
+                    .HasQueryFilter(e => e.TenantId == (ctx._tenant.Current != null ? ctx._tenant.Current.Id : string.Empty));
     }
 }

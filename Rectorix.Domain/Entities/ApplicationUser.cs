@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 namespace Rectorix.Domain.Entities
 {
-    public class ApplicationUser: IdentityUser<long>
+    public class ApplicationUser : IdentityUser<long>, IMustHaveTenant
     {
         public string FullName { get; set; } = default!;
         public string? ProfilePictureUrl { get; set; }
@@ -15,7 +15,6 @@ namespace Rectorix.Domain.Entities
         public DateTime? RefreshTokenExpiry { get; set; }
 
         public virtual Address? Address { get; set; }
-
-
+        public string TenantId { get ; set ; }
     }
 }
